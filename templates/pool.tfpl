@@ -1,6 +1,6 @@
 version: "1"
 instances:
-  - name: debian-11
+  - name: debian-bullseye
     default: true
     type: google
     pool: ${runnerPoolCount}
@@ -12,7 +12,9 @@ instances:
       account:
         project_id: ${runnerProject}
         key: "${runnerHome}/sa.json"
-        image: ${runnerVMImage}
+      image: ${runnerVMImage}
+      network: ${runnerNetwork}
+      subnetwork: ${runnerSubNetwork}
       machine_type: ${runnerMachineType}
       zone:
         - ${runnerZone}

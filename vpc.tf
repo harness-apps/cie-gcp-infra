@@ -17,6 +17,13 @@ resource "google_compute_subnetwork" "delegate_subnet" {
   ip_cidr_range = "10.10.0.0/24"
 }
 
+resource "google_compute_subnetwork" "delegate_runner_subnet" {
+  name          = "${var.vm_name}-vpc-runner-subnet"
+  region        = var.region
+  network       = google_compute_network.delegate_vpc.name
+  ip_cidr_range = "10.20.0.0/24"
+}
+
 # Firewall Rules
 resource "google_compute_firewall" "delegate_fw" {
   name    = "${var.vm_name}-firewall"

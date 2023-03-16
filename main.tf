@@ -17,15 +17,6 @@ locals {
   runner_zone = random_shuffle.az.result[1]
 }
 
-resource "google_service_account" "delegate_sa" {
-  account_id   = var.vm_name
-  display_name = "The SA to run harness-delegate vm"
-}
-
-resource "google_service_account_key" "delegate_sa_key" {
-  service_account_id = google_service_account.delegate_sa.name
-}
-
 resource "google_compute_instance" "delegate_vm" {
   depends_on = [
     google_compute_network.delegate_vpc,
@@ -66,7 +57,6 @@ EOT
   }
 
   metadata_startup_script = <<EOS
-echo "Jai Guru"
 sudo apt-get update
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
@@ -89,6 +79,8 @@ resource "local_file" "drone_runner_pool" {
     runnerVMImage     = "${var.drone_runner_image}"
     runnerMachineType = "${var.drone_runner_machine_type}"
     runnerZone        = "${local.runner_zone}"
+    runnerNetwork     = "${google_compute_network.delegate_vpc.id}"
+    runnerSubNetwork  = "${google_compute_subnetwork.delegate_runner_subnet.id}"
   })
   filename        = "${path.module}/runner/pool.yml"
   file_permission = "0700"
@@ -106,55 +98,4 @@ resource "local_file" "delegate_runner" {
   })
   filename        = "${path.module}/runner/docker-compose.yml"
   file_permission = "0700"
-}
-
-resource "local_sensitive_file" "sa_key" {
-  filename = "${path.module}/runner/sa.json"
-  content  = base64decode(google_service_account_key.delegate_sa_key.private_key)
-}
-
-## Provision 
-resource "null_resource" "provision_delegate_vm" {
-
-  depends_on = [
-    google_compute_instance.delegate_vm
-  ]
-
-  provisioner "file" {
-    source      = "${path.module}/runner"
-    destination = "/home/${var.vm_ssh_user}"
-    connection {
-      type        = "ssh"
-      host        = google_compute_instance.delegate_vm.network_interface.0.access_config.0.nat_ip
-      user        = var.vm_ssh_user
-      private_key = local.vm_user_ssh_private_key
-      agent       = "false"
-    }
-  }
-
-  provisioner "file" {
-    source      = "${path.module}/scripts/run.sh"
-    destination = "/home/${var.vm_ssh_user}/run.sh"
-    connection {
-      type        = "ssh"
-      host        = google_compute_instance.delegate_vm.network_interface.0.access_config.0.nat_ip
-      user        = var.vm_ssh_user
-      private_key = local.vm_user_ssh_private_key
-      agent       = "false"
-    }
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "chmod +x /home/${var.vm_ssh_user}/run.sh",
-      "/home/${var.vm_ssh_user}/run.sh",
-    ]
-    connection {
-      type        = "ssh"
-      host        = google_compute_instance.delegate_vm.network_interface.0.access_config.0.nat_ip
-      user        = var.vm_ssh_user
-      private_key = local.vm_user_ssh_private_key
-      agent       = "false"
-    }
-  }
 }

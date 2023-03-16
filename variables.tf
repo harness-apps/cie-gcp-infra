@@ -69,7 +69,7 @@ variable "harness_delegate_memory" {
 variable "drone_runner_image" {
   description = "The VM image to use for drone runner"
   type        = string
-  default     = "projects/debian-cloud/global/images/debian-11"
+  default     = "projects/debian-cloud/global/images/debian-11-bullseye-v20230306"
 }
 
 variable "drone_runner_pool_count" {
