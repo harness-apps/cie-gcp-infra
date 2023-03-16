@@ -1,0 +1,80 @@
+# https://taskfile.dev
+
+version: "3"
+
+vars:
+  TFVARS_FILE: .local.tfvars
+
+dotenv:
+  - .env
+
+tasks:
+  default:
+    cmds:
+      - task: plan
+    silent: true
+
+  clean:
+    desc: Clean all terraform artifacts/assets
+    silent: true
+    cmds:
+      - rm -rf .terraform .terraform.lock.hcl
+  format:
+    desc: Format terraform files
+    silent: true
+    cmds:
+      - terraform fmt --recursive {{.ROOT_DIR}}
+  init:
+    desc: Init terraform working directory
+    silent: true
+    cmds:
+      - terraform init
+
+  validate:
+    silent: true
+    deps:
+      - format
+    desc: Validate the terraform resources
+    cmds:
+      - terraform validate
+  
+  create_vm:
+    silent: true
+    deps:
+      - validate
+    desc: Create the Harness Delegate VM Infra
+    cmds:
+     - terraform apply -var vm_ssh_user="$USER" -var-file={{.TFVARS_FILE}}
+  
+  deploy_harness_delegate:
+    silent: true
+    deps:
+      - validate
+    desc: Deploy the Harness Delegate on to GKE
+    cmds:
+     - terraform apply -var-file={{.TFVARS_FILE}} -var install_harness_delegate=true
+  
+  destroy:
+    silent: true
+    desc: Destroys terraform resources
+    cmds:
+      - terraform destroy -var-file={{.TFVARS_FILE}}
+
+  ssh:
+    silent: true
+    desc: SSH into instance
+    cmds:
+     - gcloud compute ssh --ssh-key-file=$PWD/.keys/delegate_id_rsa {{.DELEGATE_NAME}} --zone={{.VM_ZONE}}
+    vars:
+      VM_SSH_USER:
+        sh: terraform output -raw vm_ssh_user
+      DELEGATE_NAME:
+        sh: terraform output -raw delegate_vm_name
+      VM_ZONE:
+        sh: terraform output -raw zone
+  
+  readme:
+    desc: Build the README.md
+    silent: true
+    cmds:
+     - terraform-docs {{.ROOT_DIR}} > {{.ROOT_DIR}}/README.md

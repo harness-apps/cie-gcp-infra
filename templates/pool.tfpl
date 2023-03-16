@@ -1,0 +1,18 @@
+version: "1"
+instances:
+  - name: debian-11
+    default: true
+    type: google
+    pool: ${runnerPoolCount}
+    limit:
+    platform:
+      os: linux
+      arch: amd64
+    spec:
+      account:
+        project_id: ${runnerProject}
+        key: ${delegateSAKey}
+        image: ${runnerVMImage}
+      machine_type: ${runnerMachineType}
+      zone:
+        - ${runnerZone}
