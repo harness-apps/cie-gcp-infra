@@ -2,6 +2,7 @@ version: "3.7"
 services:
   harness-ng-delegate:
     restart: unless-stopped
+    network_mode: host
     deploy:
       resources:
         limits:
@@ -25,8 +26,8 @@ services:
       restart: unless-stopped  
       image: drone/drone-runner-aws:latest  
       volumes:  
-        - /runner:/runner  
-        - "${delegateSAKey}:/key"
+        - "${runnerHome}:/runner"
+        - "${runnerHome}/sa.json:/key"
       entrypoint: ["/bin/drone-runner-aws", "delegate", "--pool", "pool.yml"]  
       working_dir: /runner
       ports:  

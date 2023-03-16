@@ -9,17 +9,21 @@ data "google_compute_zones" "available" {
 }
 
 resource "random_shuffle" "az" {
-  input        = data.google_compute_zones.available.names
-  result_count = 1
+  input = data.google_compute_zones.available.names
 }
 
 locals {
   google_zone = random_shuffle.az.result[0]
+  runner_zone = random_shuffle.az.result[1]
 }
 
 resource "google_service_account" "delegate_sa" {
   account_id   = var.vm_name
   display_name = "The SA to run harness-delegate vm"
+}
+
+resource "google_service_account_key" "delegate_sa_key" {
+  service_account_id = google_service_account.delegate_sa.name
 }
 
 resource "google_compute_instance" "delegate_vm" {
@@ -66,50 +70,91 @@ echo "Jai Guru"
 sudo apt-get update
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
-mkdir /runner
 EOS
 
   service_account {
     # Google recommends custom service accounts that have cloud-platform scope and permissions granted via IAM Roles.
-    email  = google_service_account.delegate_sa.email
+    email = google_service_account.delegate_sa.email
+    # TODO trim down the scope to only what is needed
     scopes = ["cloud-platform"]
   }
 }
 
-# provisioner "file" {
-#   content = templatefile("${path.module}/templates/pool.tpfl", {
-#     runnerPoolName    = ""
-#     runnerPoolCount   = ""
-#     runnerProject     = ""
-#     delegateSAKey     = ""
-#     runnerVMImage     = ""
-#     runnerMachineType = ""
-#     runnerZone        = ""
-#   })
-#   destination = "/runner/pool.yml"
-#   connection {
-#     type        = "ssh"
-#     user        = "jon"
-#     private_key = ${local.vm_user_ssh_private}
-#     agent       = "false"
-#   }
-# }
+## Runner artifacts
+resource "local_file" "drone_runner_pool" {
+  content = templatefile("${path.module}/templates/pool.tfpl", {
+    runnerHome        = "/home/${var.vm_ssh_user}/runner"
+    runnerPoolCount   = "${var.drone_runner_pool_count}"
+    runnerProject     = "${var.project_id}"
+    runnerVMImage     = "${var.drone_runner_image}"
+    runnerMachineType = "${var.drone_runner_machine_type}"
+    runnerZone        = "${local.runner_zone}"
+  })
+  filename        = "${path.module}/runner/pool.yml"
+  file_permission = "0700"
+}
 
-# provisioner "file" {
-#   content = templatefile("${path.module}/templates/docker-compose.tpfl", {
-#     delegateCPU          = ""
-#     delegateMemory       = ""
-#     delegateImage        = ""
-#     delegateSAKey        = ""
-#     harnessAccountId     = ""
-#     harnessDelegateToken = ""
-#     harnessDelegateName  = ""
-#   })
-#   destination = "/runner/docker-compose.yml"
-#   connection {
-#     type        = "ssh"
-#     user        = "jon"
-#     private_key = ${local.vm_user_ssh_private}
-#     agent       = "false"
-#   }
-# }
+resource "local_file" "delegate_runner" {
+  content = templatefile("${path.module}/templates/docker-compose.tfpl", {
+    runnerHome           = "/home/${var.vm_ssh_user}/runner"
+    delegateCPU          = "${var.harness_delegate_cpu}"
+    delegateMemory       = "${var.harness_delegate_memory}"
+    delegateImage        = "${var.harness_delegate_image}"
+    harnessAccountId     = "${var.harness_account_id}"
+    harnessDelegateToken = "${var.harness_delegate_token}"
+    harnessDelegateName  = "${var.harness_delegate_name}"
+  })
+  filename        = "${path.module}/runner/docker-compose.yml"
+  file_permission = "0700"
+}
+
+resource "local_sensitive_file" "sa_key" {
+  filename = "${path.module}/runner/sa.json"
+  content  = base64decode(google_service_account_key.delegate_sa_key.private_key)
+}
+
+## Provision 
+resource "null_resource" "provision_delegate_vm" {
+
+  depends_on = [
+    google_compute_instance.delegate_vm
+  ]
+
+  provisioner "file" {
+    source      = "${path.module}/runner"
+    destination = "/home/${var.vm_ssh_user}"
+    connection {
+      type        = "ssh"
+      host        = google_compute_instance.delegate_vm.network_interface.0.access_config.0.nat_ip
+      user        = var.vm_ssh_user
+      private_key = local.vm_user_ssh_private_key
+      agent       = "false"
+    }
+  }
+
+  provisioner "file" {
+    source      = "${path.module}/scripts/run.sh"
+    destination = "/home/${var.vm_ssh_user}/run.sh"
+    connection {
+      type        = "ssh"
+      host        = google_compute_instance.delegate_vm.network_interface.0.access_config.0.nat_ip
+      user        = var.vm_ssh_user
+      private_key = local.vm_user_ssh_private_key
+      agent       = "false"
+    }
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /home/${var.vm_ssh_user}/run.sh",
+      "/home/${var.vm_ssh_user}/run.sh",
+    ]
+    connection {
+      type        = "ssh"
+      host        = google_compute_instance.delegate_vm.network_interface.0.access_config.0.nat_ip
+      user        = var.vm_ssh_user
+      private_key = local.vm_user_ssh_private_key
+      agent       = "false"
+    }
+  }
+}

@@ -19,11 +19,13 @@ tasks:
     silent: true
     cmds:
       - rm -rf .terraform .terraform.lock.hcl
+
   format:
     desc: Format terraform files
     silent: true
     cmds:
       - terraform fmt --recursive {{.ROOT_DIR}}
+
   init:
     desc: Init terraform working directory
     silent: true
@@ -44,21 +46,13 @@ tasks:
       - validate
     desc: Create the Harness Delegate VM Infra
     cmds:
-     - terraform apply -var vm_ssh_user="$USER" -var-file={{.TFVARS_FILE}}
-  
-  deploy_harness_delegate:
-    silent: true
-    deps:
-      - validate
-    desc: Deploy the Harness Delegate on to GKE
-    cmds:
-     - terraform apply -var-file={{.TFVARS_FILE}} -var install_harness_delegate=true
-  
+     - terraform apply -var vm_ssh_user="$USER" -var-file={{.TFVARS_FILE}} {{.CLI_ARGS}}
+
   destroy:
     silent: true
     desc: Destroys terraform resources
     cmds:
-      - terraform destroy -var-file={{.TFVARS_FILE}}
+      - terraform destroy -var-file={{.TFVARS_FILE}} {{.CLI_ARGS}}
 
   ssh:
     silent: true

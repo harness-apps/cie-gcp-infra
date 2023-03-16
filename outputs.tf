@@ -27,3 +27,8 @@ output "vm_external_ip" {
   value       = google_compute_instance.delegate_vm.network_interface.0.access_config.0.nat_ip
   description = "The external IP to access the VM"
 }
+
+output "pool_name" {
+  value       = "debian-11"
+  description = "The drone runner pool name"
+}

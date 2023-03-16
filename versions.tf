@@ -4,13 +4,20 @@ terraform {
       source  = "hashicorp/google"
       version = ">= 4.47.0"
     }
-    random = {
-      source  = "hashicorp/random"
-      version = "3.4.3"
-    }
+
     local = {
       source  = "hashicorp/local"
       version = "2.2.3"
+    }
+
+    null = {
+      source  = "hashicorp/null"
+      version = "3.2.1"
+    }
+
+    random = {
+      source  = "hashicorp/random"
+      version = "3.4.3"
     }
   }
 

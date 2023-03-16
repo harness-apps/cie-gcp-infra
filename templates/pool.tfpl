@@ -11,7 +11,7 @@ instances:
     spec:
       account:
         project_id: ${runnerProject}
-        key: ${delegateSAKey}
+        key: "${runnerHome}/sa.json"
         image: ${runnerVMImage}
       machine_type: ${runnerMachineType}
       zone:
