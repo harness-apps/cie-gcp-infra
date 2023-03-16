@@ -40,8 +40,12 @@ tasks:
     cmds:
       - terraform validate
   
-  create_vm:
+  create_delegate_infra:
     silent: true
+    aliases:
+      - create
+      - delegate
+      - infra
     deps:
       - validate
     desc: Create the Harness Delegate VM Infra
