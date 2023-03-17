@@ -27,7 +27,7 @@ resource "google_compute_instance" "delegate_vm" {
   machine_type = var.machine_type
   zone         = local.google_zone
 
-  tags = ["harness", "delegate"]
+  tags = ["harness-delegate"]
 
   boot_disk {
     initialize_params {
@@ -58,6 +58,7 @@ EOT
 
   metadata_startup_script = <<EOS
 sudo apt-get update
+sudo apt install netcat
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 EOS

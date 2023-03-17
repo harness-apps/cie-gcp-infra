@@ -70,6 +70,17 @@ tasks:
         sh: terraform output -raw delegate_vm_name
       VM_ZONE:
         sh: terraform output -raw zone
+
+  show_runners:
+    silent: true
+    aliases:
+      - runners
+    desc: List all the GCP VMs that are provisioned to be run as Drone Runners
+    cmds:
+     - gcloud compute  instances list --zones={{.RUNNER_ZONE}}
+    vars:
+      RUNNER_ZONE:
+        sh: terraform output -raw drone_runne_zone
   
   readme:
     desc: Build the README.md

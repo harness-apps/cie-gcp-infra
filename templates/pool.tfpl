@@ -16,5 +16,8 @@ instances:
       network: ${runnerNetwork}
       subnetwork: ${runnerSubNetwork}
       machine_type: ${runnerMachineType}
+      private_ip: true
+      tags:
+       - runner
       zone:
         - ${runnerZone}

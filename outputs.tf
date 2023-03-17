@@ -29,6 +29,11 @@ output "vm_external_ip" {
 }
 
 output "pool_name" {
-  value       = "debian-11"
+  value       = "debian-bullseye"
   description = "The drone runner pool name"
+}
+
+output "drone_runne_zone" {
+  value       = local.runner_zone
+  description = "The Google Clound zone where runners will be provisioned and run"
 }
