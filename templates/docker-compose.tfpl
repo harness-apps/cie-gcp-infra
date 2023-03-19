@@ -25,14 +25,13 @@ services:
     image: drone/drone-runner-aws:latest
     volumes:
       - "${runnerHome}:/runner"
-      - "${runnerHome}/sa.json:/key"
     entrypoint:
       [
         "/bin/drone-runner-aws",
         "delegate",
         "--pool",
         "pool.yml",
-        "--env-file",
+        "--envfile",
         ".env"
       ]
     working_dir: /runner

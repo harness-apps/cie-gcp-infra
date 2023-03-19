@@ -3,22 +3,21 @@ instances:
   - name: debian-bullseye
     default: true
     type: google
-    pool: ${runnerPoolCount}
-    limit: ${runnerPoolLimit}
+    pool: ${poolCount}
+    limit: ${poolLimit}
     platform:
       os: linux
       arch: amd64
     spec:
       account:
-        project_id: ${runnerProject}
-        json_path: "${runnerHome}/sa.json"
-      image: ${runnerVMImage}
-      network: ${runnerNetwork}
-      subnetwork: ${runnerSubNetwork}
-      machine_type: ${runnerMachineType}
+        project_id: ${project}
+        json_path: "/runner/sa.json"
+      image: ${vmImage}
+      network: ${network}
+      subnetwork: ${subNetwork}
+      machine_type: ${machineType}
       private_ip: true
       tags:
-       - runner
-       - allow-docker
+       - builder
       zone:
-        - ${runnerZone}
+        - ${zone}

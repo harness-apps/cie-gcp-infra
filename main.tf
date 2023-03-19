@@ -74,15 +74,15 @@ EOS
 ## Runner artifacts
 resource "local_file" "drone_runner_pool" {
   content = templatefile("${path.module}/templates/pool.tfpl", {
-    runnerHome        = "/home/${var.vm_ssh_user}/runner"
-    runnerPoolCount   = "${var.drone_runner_pool_count}"
-    runnerPoolLimit   = "${var.drone_runner_pool_limit}"
-    runnerProject     = "${var.project_id}"
-    runnerVMImage     = "${var.drone_runner_image}"
-    runnerMachineType = "${var.drone_runner_machine_type}"
-    runnerZone        = "${local.runner_zone}"
-    runnerNetwork     = "${google_compute_network.delegate_vpc.id}"
-    runnerSubNetwork  = "${google_compute_subnetwork.delegate_runner_subnet.id}"
+    home        = "/home/${var.vm_ssh_user}/runner"
+    poolCount   = "${var.drone_runner_pool_count}"
+    poolLimit   = "${var.drone_runner_pool_limit}"
+    project     = "${var.project_id}"
+    vmImage     = "${var.drone_runner_image}"
+    machineType = "${var.drone_runner_machine_type}"
+    zone        = "${local.runner_zone}"
+    network     = "${google_compute_network.delegate_vpc.id}"
+    subNetwork  = "${google_compute_subnetwork.delegate_builder_subnet.id}"
   })
   filename        = "${path.module}/runner/pool.yml"
   file_permission = "0700"
