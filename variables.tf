@@ -78,8 +78,26 @@ variable "drone_runner_pool_count" {
   default     = 1
 }
 
+variable "drone_runner_pool_limit" {
+  description = "The drone runner VM pool limit"
+  type        = number
+  default     = 1
+}
+
 variable "drone_runner_machine_type" {
   description = "The VM machine type to use for drone runners"
   # https://cloud.google.com/compute/docs/general-purpose-machines#e2_machine_types
   default = "e2-standard-4"
+}
+
+
+variable "drone_debug_enable" {
+  description = "Enable Drone Debug Logs"
+  type        = bool
+  default     = false
+}
+variable "drone_trace_enable" {
+  description = "Enable Drone Trace Logs"
+  type        = bool
+  default     = false
 }

@@ -31,7 +31,9 @@ services:
         "/bin/drone-runner-aws",
         "delegate",
         "--pool",
-        "pool.yml"
+        "pool.yml",
+        "--env-file",
+        ".env"
       ]
     working_dir: /runner
     environment:

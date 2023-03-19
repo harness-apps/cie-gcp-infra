@@ -25,8 +25,8 @@ resource "google_compute_subnetwork" "delegate_runner_subnet" {
 }
 
 # Firewall Rules
-resource "google_compute_firewall" "delegate_builder_fw" {
-  name    = "${var.vm_name}-vpc-allow-9079"
+resource "google_compute_firewall" "delegate_builder_lite_engine_fw" {
+  name    = "${var.vm_name}-vpc-allow-lite-engine"
   network = google_compute_network.delegate_vpc.name
 
   allow {
@@ -38,21 +38,22 @@ resource "google_compute_firewall" "delegate_builder_fw" {
   target_tags = ["runner"]
 }
 
-# resource "google_compute_firewall" "runner_docker" {
-#   name    = "${var.vm_name}-vpc-allow-docker"
-#   network = google_compute_network.delegate_vpc.name
+resource "google_compute_firewall" "delegate_builder_lite_docker_fw" {
+  # only firewall rule with this name is checked for existence
+  name    = "default-allow-docker"
+  network = google_compute_network.delegate_vpc.name
 
-#   allow {
-#     protocol = "tcp"
-#     ports    = ["2376"]
-#   }
+  allow {
+    protocol = "tcp"
+    ports    = ["2376"]
+  }
 
-#   source_ranges = [google_compute_subnetwork.delegate_runner_subnet.ip_cidr_range,google_compute_subnetwork.delegate_runner_subnet.ip_cidr_range]
-#   target_tags   = ["runner"]
-# }
+  source_tags = ["harness-delegate"]
+  target_tags = ["allow-docker"]
+}
 
-resource "google_compute_firewall" "delegate_ssh_fw" {
-  name    = "${var.vm_name}-vpc-allow-ssh"
+resource "google_compute_firewall" "delegate_fw" {
+  name    = "${var.vm_name}-vpc-allow-ssh-9079"
   network = google_compute_network.delegate_vpc.name
 
   allow {

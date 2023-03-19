@@ -58,7 +58,7 @@ EOT
 
   metadata_startup_script = <<EOS
 sudo apt-get update
-sudo apt install netcat
+sudo apt install -y netcat
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 EOS
@@ -76,6 +76,7 @@ resource "local_file" "drone_runner_pool" {
   content = templatefile("${path.module}/templates/pool.tfpl", {
     runnerHome        = "/home/${var.vm_ssh_user}/runner"
     runnerPoolCount   = "${var.drone_runner_pool_count}"
+    runnerPoolLimit   = "${var.drone_runner_pool_limit}"
     runnerProject     = "${var.project_id}"
     runnerVMImage     = "${var.drone_runner_image}"
     runnerMachineType = "${var.drone_runner_machine_type}"
@@ -98,5 +99,14 @@ resource "local_file" "delegate_runner" {
     harnessDelegateName  = "${var.harness_delegate_name}"
   })
   filename        = "${path.module}/runner/docker-compose.yml"
+  file_permission = "0700"
+}
+
+resource "local_file" "delegate_env" {
+  content = templatefile("${path.module}/templates/.env.tfpl", {
+    droneDebugEnable = "${var.drone_debug_enable}"
+    droneTraceEnable = "${var.drone_trace_enable}"
+  })
+  filename        = "${path.module}/runner/.env"
   file_permission = "0700"
 }

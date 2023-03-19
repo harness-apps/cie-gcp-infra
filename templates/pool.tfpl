@@ -4,14 +4,14 @@ instances:
     default: true
     type: google
     pool: ${runnerPoolCount}
-    limit:
+    limit: ${runnerPoolLimit}
     platform:
       os: linux
       arch: amd64
     spec:
       account:
         project_id: ${runnerProject}
-        key: "${runnerHome}/sa.json"
+        json_path: "${runnerHome}/sa.json"
       image: ${runnerVMImage}
       network: ${runnerNetwork}
       subnetwork: ${runnerSubNetwork}
@@ -19,5 +19,6 @@ instances:
       private_ip: true
       tags:
        - runner
+       - allow-docker
       zone:
         - ${runnerZone}
