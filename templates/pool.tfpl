@@ -1,6 +1,6 @@
 version: "1"
 instances:
-  - name: debian-bullseye
+  - name: ${poolName}
     default: true
     type: google
     pool: ${poolCount}

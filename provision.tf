@@ -1,10 +1,9 @@
 ## Provision required artifacts on the Delegate VM
-
 resource "null_resource" "provision_delegate_vm" {
 
-  depends_on = [
-    google_compute_instance.delegate_vm
-  ]
+  triggers = {
+    config_update = var.update_runner_config
+  }
 
   provisioner "file" {
     source      = "${path.module}/runner"
@@ -29,11 +28,20 @@ resource "null_resource" "provision_delegate_vm" {
       agent       = "false"
     }
   }
+}
 
+# Starts or Stops the delegate
+resource "null_resource" "start_stop_delegate" {
+
+  triggers = {
+    action = var.stop_harness_delegate
+    config_update = var.update_runner_config
+  }
+  
   provisioner "remote-exec" {
     inline = [
       "chmod +x /home/${var.vm_ssh_user}/run.sh",
-      "/home/${var.vm_ssh_user}/run.sh",
+      "/home/${var.vm_ssh_user}/run.sh ${var.stop_harness_delegate}",
     ]
     connection {
       type        = "ssh"

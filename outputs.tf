@@ -15,6 +15,11 @@ output "zone" {
 
 output "delegate_vm_name" {
   value       = var.vm_name
+  description = "The Harness Delegate GCE VM Name"
+}
+
+output "delegate_name" {
+  value       = var.harness_delegate_name
   description = "The Harness Delegate Name"
 }
 
@@ -29,8 +34,8 @@ output "vm_external_ip" {
 }
 
 output "pool_name" {
-  value       = "debian-bullseye"
-  description = "The drone runner pool name"
+  value       = var.drone_builder_pool_name
+  description = "The drone builder VM pool name"
 }
 
 output "drone_runne_zone" {

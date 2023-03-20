@@ -13,7 +13,9 @@ resource "random_shuffle" "az" {
 }
 
 locals {
+  # zone where delegate will be provisioned
   google_zone = random_shuffle.az.result[0]
+  # zone where builders will be provisioned
   runner_zone = random_shuffle.az.result[1]
 }
 
@@ -31,7 +33,7 @@ resource "google_compute_instance" "delegate_vm" {
 
   boot_disk {
     initialize_params {
-      image = "debian-cloud/debian-11"
+      image = var.harness_delegate_vm_image
     }
   }
 
@@ -49,7 +51,6 @@ resource "google_compute_instance" "delegate_vm" {
     }
   }
 
-  # TODO: enable workload identity
   metadata = {
     ssh-keys = <<EOT
 ${var.vm_ssh_user}:${local.vm_user_ssh_pub_key}
@@ -58,7 +59,7 @@ EOT
 
   metadata_startup_script = <<EOS
 sudo apt-get update
-sudo apt install -y netcat
+sudo apt install net-tools
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 EOS
@@ -71,15 +72,20 @@ EOS
   }
 }
 
-## Runner artifacts
-resource "local_file" "drone_runner_pool" {
+#####################################################
+## Runner Artifacts
+#####################################################
+
+## pool.yml
+resource "local_file" "drone_builder_pool" {
   content = templatefile("${path.module}/templates/pool.tfpl", {
     home        = "/home/${var.vm_ssh_user}/runner"
-    poolCount   = "${var.drone_runner_pool_count}"
-    poolLimit   = "${var.drone_runner_pool_limit}"
+    poolName    = "${var.drone_builder_pool_name}"
+    poolCount   = "${var.drone_builder_pool_count}"
+    poolLimit   = "${var.drone_builder_pool_limit}"
     project     = "${var.project_id}"
-    vmImage     = "${var.drone_runner_image}"
-    machineType = "${var.drone_runner_machine_type}"
+    vmImage     = "${var.drone_builder_image}"
+    machineType = "${var.drone_builder_machine_type}"
     zone        = "${local.runner_zone}"
     network     = "${google_compute_network.delegate_vpc.id}"
     subNetwork  = "${google_compute_subnetwork.delegate_builder_subnet.id}"
@@ -88,6 +94,7 @@ resource "local_file" "drone_runner_pool" {
   file_permission = "0700"
 }
 
+## docker-compose.yml
 resource "local_file" "delegate_runner" {
   content = templatefile("${path.module}/templates/docker-compose.tfpl", {
     runnerHome           = "/home/${var.vm_ssh_user}/runner"
@@ -102,6 +109,7 @@ resource "local_file" "delegate_runner" {
   file_permission = "0700"
 }
 
+## .env that will be used by the delegate/runner
 resource "local_file" "delegate_env" {
   content = templatefile("${path.module}/templates/.env.tfpl", {
     droneDebugEnable = "${var.drone_debug_enable}"

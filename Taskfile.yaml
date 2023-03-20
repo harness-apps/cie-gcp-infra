@@ -39,7 +39,7 @@ tasks:
     desc: Validate the terraform resources
     cmds:
       - terraform validate
-  
+
   create_delegate_infra:
     silent: true
     aliases:
@@ -50,19 +50,40 @@ tasks:
       - validate
     desc: Create the Harness Delegate VM Infra
     cmds:
-     - terraform apply -var vm_ssh_user="$USER" -var-file={{.TFVARS_FILE}} {{.CLI_ARGS}}
+      - terraform apply -var vm_ssh_user="$USER" -var-file={{.TFVARS_FILE}} {{.CLI_ARGS}}
 
   destroy:
     silent: true
     desc: Destroys terraform resources
     cmds:
-      - terraform destroy -var-file={{.TFVARS_FILE}} {{.CLI_ARGS}}
+      - terraform destroy -var stop_harness_delegate=true -var-file={{.TFVARS_FILE}} {{.CLI_ARGS}}
+
+  start_delegate:
+    silent: true
+    desc: Starts the Harness Delegate
+    cmds:
+      - terraform apply -var stop_harness_delegate=false -var-file={{.TFVARS_FILE}} {{.CLI_ARGS}}
+
+  stop_delegate:
+    silent: true
+    desc: Stops the Harness Delegate
+    cmds:
+      - terraform apply -var stop_harness_delegate=true -var-file={{.TFVARS_FILE}} {{.CLI_ARGS}}
+
+  update:
+    silent: true
+    desc: Update the delegate configuration files and restart the delegate
+    generates:
+      - runner/*.yaml
+      - runner/*.json
+    cmds:
+      - terraform apply -var update_runner_config=yes  -var-file={{.TFVARS_FILE}} {{.CLI_ARGS}}
 
   ssh:
     silent: true
     desc: SSH into instance
     cmds:
-     - gcloud compute ssh --ssh-key-file=$PWD/.keys/delegate_id_rsa {{.DELEGATE_NAME}} --zone={{.VM_ZONE}}
+      - gcloud compute ssh --ssh-key-file=$PWD/.keys/delegate_id_rsa {{.DELEGATE_NAME}} --zone={{.VM_ZONE}}
     vars:
       VM_SSH_USER:
         sh: terraform output -raw vm_ssh_user
@@ -77,13 +98,13 @@ tasks:
       - runners
     desc: List all the GCP VMs that are provisioned to be run as Drone Runners
     cmds:
-     - gcloud compute  instances list --zones={{.RUNNER_ZONE}}
+      - gcloud compute  instances list --zones={{.RUNNER_ZONE}}
     vars:
       RUNNER_ZONE:
         sh: terraform output -raw drone_runne_zone
-  
+
   readme:
     desc: Build the README.md
     silent: true
     cmds:
-     - terraform-docs {{.ROOT_DIR}} > {{.ROOT_DIR}}/README.md
+      - terraform-docs {{.ROOT_DIR}} > {{.ROOT_DIR}}/README.md
